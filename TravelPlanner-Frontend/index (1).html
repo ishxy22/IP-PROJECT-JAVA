@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Itinerary Planner</title>
+    <!-- <title>AIDS-C GROUP-19 [38,49,51]</title> -->
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f3f4f6; --text-color: #1f2937; --text-muted-color: #6b7280; --card-bg: rgba(255, 255, 255, 0.6); --card-border: rgba(0, 0, 0, 0.1); --input-bg: #e5e7eb; --aurora-color: rgba(79, 70, 229, 0.25); --scrollbar-track: #e5e7eb; --scrollbar-thumb: #6d28d9; --scrollbar-thumb-hover: #be185d;
+        }
+        html.dark {
+            --bg-color: #0a0a0a; --text-color: #e5e7eb; --text-muted-color: #9ca3af; --card-bg: rgba(255, 255, 255, 0.05); --card-border: rgba(255, 255, 255, 0.1); --input-bg: #1f2937; --aurora-color: rgba(79, 70, 229, 0.15); --scrollbar-track: #111827; --scrollbar-thumb: #4f46e5; --scrollbar-thumb-hover: #ec4899;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; position: relative; transition: background-color 0.3s ease, color 0.3s ease; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), var(--aurora-color), transparent 40%); transition: background 0.2s ease; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--scrollbar-track); } ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+        .glass-card { background: var(--card-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); }
+        .gradient-text { background: linear-gradient(90deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .btn { transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        .btn-primary { background-image: linear-gradient(to right, #6d28d9, #be185d); } .btn-secondary { background-image: linear-gradient(to right, #10b981, #22d3ee); } .btn-accent { background-image: linear-gradient(to right, #f59e0b, #ef4444); }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
+        .nav-link { transition: all 0.2s ease-in-out; color: var(--text-muted-color); } html.dark .nav-link { color: #d1d5db; }
+        .nav-link.active { background: rgba(129, 140, 248, 0.3); color: var(--text-color); transform: scale(1.05); } html.dark .nav-link.active { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .content-section { display: none; animation: fadeIn 0.5s ease-in-out; } @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        input, textarea, .day-panel, .saved-card { background-color: var(--input-bg); border-color: var(--card-border); color: var(--text-color); }
+        input::placeholder, textarea::placeholder { color: var(--text-muted-color); } input { caret-color: #ec4899; }
+        html:not(.dark) input[type="date"], html:not(.dark) input[type="time"] { color-scheme: light; } html.dark input[type="date"], html.dark input[type="time"] { color-scheme: dark; }
+        .loader { width: 48px; height: 48px; border: 5px solid var(--text-color); border-bottom-color: #ec4899; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; } @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .place-card { overflow: hidden; position: relative; } .place-card img { transition: transform 0.4s ease; } .place-card:hover img { transform: scale(1.1); }
+        .theme-toggle { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 100; }
+        #day-planner-container { position: relative; padding-left: 20px; }
+        #day-planner-container::before { content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 4px; background-color: var(--card-border); border-radius: 2px; }
+        .day-panel { position: relative; margin-left: 20px; }
+        .day-panel::before { content: ''; position: absolute; left: -28px; top: 18px; width: 16px; height: 16px; background-color: #4f46e5; border-radius: 50%; border: 3px solid var(--bg-color); }
+        .photo-gallery img { width: 80px; height: 80px; object-cover; border-radius: 0.5rem; }
+        .journal-note { width: 100%; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: 0.5rem; padding: 8px; margin-top: 8px; }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <button id="theme-toggle" class="theme-toggle p-2 rounded-full glass-card">
+        <svg id="icon-sun" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        <svg id="icon-moon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+    </button>
+
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8" data-aos="fade-down">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight gradient-text">Travel Itinerary Planner Pro</h1>
+            <p class="text-lg mt-2" style="color: var(--text-muted-color);">Your all-in-one AI-powered travel dashboard.</p>
+        </header>
+
+        <nav class="glass-card p-2 mb-8 flex justify-center flex-wrap gap-2 rounded-full sticky top-4 z-50" data-aos="fade-up">
+            <button class="nav-link font-semibold py-2 px-6 rounded-full" data-target="planner">Planner</button>
+            <button class="nav-link font-semibold py-2 px-6 rounded-full" data-target="dashboard">Dashboard</button>
+            <button class="nav-link font-semibold py-2 px-6 rounded-full" data-target="top-places">Top Places</button>
+            <button class="nav-link font-semibold py-2 px-6 rounded-full" data-target="about">About Project</button>
+            <button class="nav-link font-semibold py-2 px-6 rounded-full" data-target="creators">Creators</button>
+        </nav>
+
+        <main>
+            <!-- Planner Section -->
+            <section id="planner" class="content-section">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="lg:col-span-1 glass-card p-6" data-aos="fade-right">
+                        <h2 class="text-2xl font-bold mb-4">Create Your Itinerary</h2>
+                        <form id="itinerary-form" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label for="start-date" class="block text-sm font-medium">Start Date*</label><input type="date" id="start-date" required class="mt-1 block w-full rounded-md p-2 border-none"></div>
+                                <div><label for="end-date" class="block text-sm font-medium">End Date*</label><input type="date" id="end-date" required class="mt-1 block w-full rounded-md p-2 border-none"></div>
+                            </div>
+                            <div><label for="destination" class="block text-sm font-medium">Overall Destination</label><input type="text" id="destination" placeholder="e.g., Swiss Alps" class="mt-1 block w-full rounded-md p-2 border-none"></div>
+                            <div id="day-planner-container" class="space-y-4 pt-2"></div>
+                            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                                <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-md btn btn-primary">Save Itinerary</button>
+                                <button type="button" id="get-suggestions-btn" class="w-full text-white font-bold py-3 px-4 rounded-md btn btn-secondary">Get AI Suggestions</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-1 space-y-8">
+                        <div class="glass-card p-6" data-aos="fade-left">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-2xl font-bold">Saved Itineraries</h2>
+                                <button id="export-pdf-btn" class="text-white font-bold py-2 px-4 rounded-md btn btn-accent text-sm">Export to PDF</button>
+                            </div>
+                            <div id="itinerary-list" class="space-y-4 max-h-[40rem] overflow-y-auto pr-2"><p>Your saved trips will appear here.</p></div>
+                        </div>
+                        <div class="glass-card p-6" data-aos="fade-left" data-aos-delay="200">
+                           <h2 class="text-2xl font-bold mb-4">AI Suggestions</h2>
+                           <div id="ai-suggestions" class="whitespace-pre-wrap max-h-60 overflow-y-auto pr-2"><p>Fill in dates and a destination, then click the suggestions button!</p></div>
+                       </div>
+                    </div>
+                </div>
+            </section>
+           <!-- Enhanced Dashboard Section (Offline Currency Conversion) -->
+<section id="dashboard" class="content-section">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+    <!-- 🌍 Interactive Map -->
+    <div class="glass-card p-6 hover:shadow-xl transition-transform transform hover:scale-[1.02]" data-aos="fade-up">
+      <h2 class="text-2xl font-bold mb-4">🌍 Interactive Map</h2>
+      <div id="map-placeholder"
+        class="h-64 rounded-xl flex items-center justify-center bg-gray-900/20 border border-gray-700">
+        <p class="text-gray-400 text-center">
+          Map preview here<br>
+          (Integrate with Mapbox / Leaflet API later)
+        </p>
+      </div>
+
+      <h3 class="text-xl font-bold mt-6 mb-3">⚡ Quick Jump</h3>
+      <div id="quick-jump-nav"
+        class="flex flex-wrap gap-2 text-sm">
+        <button class="px-3 py-1 bg-blue-600/80 hover:bg-blue-700 text-white rounded-lg transition">Day 1</button>
+        <button class="px-3 py-1 bg-blue-600/80 hover:bg-blue-700 text-white rounded-lg transition">Day 2</button>
+        <button class="px-3 py-1 bg-blue-600/80 hover:bg-blue-700 text-white rounded-lg transition">Day 3</button>
+      </div>
+    </div>
+
+    <!-- 💰 Currency & Expense Section -->
+    <div class="glass-card p-6 hover:shadow-xl transition-transform transform hover:scale-[1.02]" data-aos="fade-up"
+      data-aos-delay="100">
+      <h2 class="text-2xl font-bold mb-4">💰 Expense & Currency</h2>
+
+      <!-- Currency Converter -->
+      <div>
+        <h3 class="text-lg font-semibold">Currency Converter</h3>
+        <div class="flex items-center gap-3 mt-2">
+          <input type="number" id="from-amount" value="100"
+            class="w-full p-2 rounded-md bg-gray-800/50 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500">
+          <select id="from-currency"
+            class="p-2 rounded-md bg-gray-800/50 border border-gray-700 text-white">
+            <option>USD</option>
+            <option>EUR</option>
+            <option>INR</option>
+          </select>
+          <span class="font-bold">→</span>
+          <select id="to-currency"
+            class="p-2 rounded-md bg-gray-800/50 border border-gray-700 text-white">
+            <option>INR</option>
+            <option>USD</option>
+            <option>EUR</option>
+          </select>
+        </div>
+        <button id="convert-btn"
+          class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">Convert</button>
+        <p id="conversion-result"
+          class="mt-3 font-bold text-lg text-center gradient-text">Result will appear here</p>
+      </div>
+
+      <hr class="border-gray-700 my-5">
+
+      <!-- Expense Analytics Placeholder -->
+      <h3 class="text-lg font-semibold">Expense Analytics</h3>
+      <div class="mt-3 h-40 flex items-center justify-center rounded-xl bg-gray-900/20 border border-gray-700">
+        <p class="text-gray-400 text-center">Expense chart placeholder</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 💱 Offline Currency Conversion Script -->
+<script>
+  // Hardcoded exchange rates (approximate)
+  const rates = {
+    USD: { USD: 1, EUR: 0.92, INR: 83.10 },
+    EUR: { USD: 1.09, EUR: 1, INR: 90.50 },
+    INR: { USD: 0.012, EUR: 0.011, INR: 1 }
+  };
+
+  document.getElementById("convert-btn").addEventListener("click", () => {
+    const amount = parseFloat(document.getElementById("from-amount").value);
+    const from = document.getElementById("from-currency").value;
+    const to = document.getElementById("to-currency").value;
+    const resultEl = document.getElementById("conversion-result");
+
+    if (isNaN(amount) || amount <= 0) {
+      resultEl.textContent = "⚠️ Please enter a valid amount.";
+      return;
+    }
+
+    const rate = rates[from][to];
+    const converted = (amount * rate).toFixed(2);
+    resultEl.textContent = `${amount} ${from} = ${converted} ${to}`;
+  });
+</script>
+
+
+            <!-- Top Places Section -->
+            <section id="top-places" class="content-section">
+                 <h2 class="text-3xl font-bold mb-8 text-center gradient-text" data-aos="fade-up">Popular Destinations</h2>
+                 <!-- Nature -->
+                 <div class="mb-12"><h3 class="text-2xl font-bold mb-4" data-aos="fade-right">Nature's Wonders</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="place-card glass-card" data-aos="fade-up"><img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=2070&auto=format&fit=crop" alt="Swiss Alps" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Swiss Alps</h3><p class="mt-1" style="color: var(--text-muted-color);">Pristine mountains and serene lakes.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="100"><img src="https://images.unsplash.com/photo-1473800447596-01729482b8eb?q=80&w=2070&auto=format&fit=crop" alt="Amazon Rainforest" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Amazon Rainforest</h3><p class="mt-1" style="color: var(--text-muted-color);">The planet's most biodiverse ecosystem.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="200"><img src="https://images.unsplash.com/photo-1542042161-d19111393691?q=80&w=1974&auto=format&fit=crop" alt="Serengeti Plains" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Serengeti, Tanzania</h3><p class="mt-1" style="color: var(--text-muted-color);">Witness the great wildebeest migration.</p></div></div>
+                 </div></div>
+                 <!-- Monuments -->
+                 <div class="mb-12"><h3 class="text-2xl font-bold mb-4" data-aos="fade-right">Iconic Monuments & History</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="place-card glass-card" data-aos="fade-up"><img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071&auto=format&fit=crop" alt="Taj Mahal" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Taj Mahal, India</h3><p class="mt-1" style="color: var(--text-muted-color);">An ivory-white marble mausoleum.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="100"><img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1996&auto=format&fit=crop" alt="Colosseum, Rome" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Colosseum, Rome</h3><p class="mt-1" style="color: var(--text-muted-color);">The heart of the ancient Roman Empire.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="200"><img src="https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?q=80&w=2070&auto=format&fit=crop" alt="Machu Picchu" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Machu Picchu, Peru</h3><p class="mt-1" style="color: var(--text-muted-color);">An Incan citadel set high in the Andes.</p></div></div>
+                 </div></div>
+                 <!-- Party Hubs -->
+                 <div class="mb-12"><h3 class="text-2xl font-bold mb-4" data-aos="fade-right">Vibrant Party Hubs</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="place-card glass-card" data-aos="fade-up"><img src="https://images.unsplash.com/photo-1533106418989-88406e768257?q=80&w=2070&auto=format&fit=crop" alt="Ibiza, Spain" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Ibiza, Spain</h3><p class="mt-1" style="color: var(--text-muted-color);">The world's undisputed nightlife capital.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="100"><img src="https://images.unsplash.com/photo-1574624182355-38a8a25c7013?q=80&w=2071&auto=format&fit=crop" alt="Goa, India" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Goa, India</h3><p class="mt-1" style="color: var(--text-muted-color);">Beach parties and vibrant nightlife.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="200"><img src="https://images.unsplash.com/photo-1596627899238-0d3c47b15a45?q=80&w=1935&auto=format&fit=crop" alt="Mykonos, Greece" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Mykonos, Greece</h3><p class="mt-1" style="color: var(--text-muted-color);">Chic beach clubs and energetic vibe.</p></div></div>
+                 </div></div>
+                 <!-- Skylines -->
+                 <div><h3 class="text-2xl font-bold mb-4" data-aos="fade-right">Breathtaking Skylines</h3><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="place-card glass-card" data-aos="fade-up"><img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=2070&auto=format&fit=crop" alt="London, UK" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">London, UK</h3><p class="mt-1" style="color: var(--text-muted-color);">A perfect blend of historic and modern.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="100"><img src="https://images.unsplash.com/photo-1507041957456-9c397ce39c97?q=80&w=2070&auto=format&fit=crop" alt="Dubai, UAE" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Dubai, UAE</h3><p class="mt-1" style="color: var(--text-muted-color);">Futuristic architecture meets the desert.</p></div></div>
+                    <div class="place-card glass-card" data-aos="fade-up" data-aos-delay="200"><img src="https://images.unsplash.com/photo-1506963421133-d5f85f4a7c03?q=80&w=2070&auto=format&fit=crop" alt="Hong Kong" class="w-full h-56 object-cover"><div class="p-6"><h3 class="text-xl font-bold">Hong Kong</h3><p class="mt-1" style="color: var(--text-muted-color);">A dense, dramatic, and iconic skyline.</p></div></div>
+                 </div></div>
+            </section>
+            
+            <!-- About Section (IMPROVED & DETAILED) -->
+            <section id="about" class="content-section glass-card p-8" data-aos="fade-up">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-3xl font-bold mb-6 text-center gradient-text">About The Project</h2>
+                    
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-3 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10h.01M15 10h.01M10 14a2 2 0 104 0 2 2 0 00-4 0z" /></svg>
+                                Our Mission
+                            </h3>
+                            <p style="color: var(--text-muted-color);">
+                                To redefine travel planning by creating a seamless, intelligent, and all-in-one digital dashboard. We empower travelers to move beyond simple spreadsheets and static documents, offering a dynamic platform that integrates AI-powered suggestions, real-time expense tracking, and personal memory logging to create truly unforgettable journeys.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                Core Features
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2" style="color: var(--text-muted-color);">
+                                <li><strong>AI Itinerary Generation:</strong> Leverages the Groq API with the Llama 3.1 model to provide intelligent, context-aware travel suggestions, from landmarks to local cuisine.</li>
+                                <li><strong>Dynamic Timeline Planner:</strong> A visually intuitive timeline interface for adding and organizing daily activities, complete with timings and notes.</li>
+                                <li><strong>Travel Journal & Photo Gallery:</strong> Enables users to capture memories by adding daily notes and uploading photos directly to their itinerary, creating a rich travel log.</li>
+                                <li><strong>Expense Dashboard:</strong> An integrated module for budget management, featuring a real-time currency converter and analytics to visualize spending.</li>
+                                <li><strong>PDF Export:</strong> Allows users to download a beautifully formatted, offline-ready PDF of their complete itinerary for easy access on the go.</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <h3 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                Technology Stack
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="p-4 rounded-lg" style="background-color: var(--input-bg);">
+                                    <h4 class="font-bold text-lg mb-2">Frontend</h4>
+                                    <p>Built with <strong>Vanilla JavaScript (ES6+)</strong> for a lightweight and fast user experience, styled with <strong>Tailwind CSS</strong> for a modern, responsive design. The UI is enhanced with the <strong>AOS</strong> library for scroll animations.</p>
+                                </div>
+                                <div class="p-4 rounded-lg" style="background-color: var(--input-bg);">
+                                    <h4 class="font-bold text-lg mb-2">Backend</h4>
+                                    <p>Powered by a robust <strong>Java Spring Boot</strong> application, exposing a RESTful API for all data operations. It uses <strong>Spring Data JPA</strong> for seamless database interaction and is built with <strong>Maven</strong>.</p>
+                                </div>
+                                <div class="p-4 rounded-lg" style="background-color: var(--input-bg);">
+                                    <h4 class="font-bold text-lg mb-2">Database</h4>
+                                    <p>Utilizes an in-memory <strong>H2 Database</strong> for development and demonstration, configured for easy setup and rapid prototyping.</p>
+                                </div>
+                                <div class="p-4 rounded-lg" style="background-color: var(--input-bg);">
+                                    <h4 class="font-bold text-lg mb-2">APIs & Services</h4>
+                                    <p>Integrates the <strong>Groq API</strong> for AI features, and uses <strong>jsPDF</strong> & <strong>html2canvas</strong> for client-side PDF generation.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <!-- Creators Section (IMPROVED & DETAILED) -->
+            <section id="creators" class="content-section">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-3xl font-bold mb-10 text-center gradient-text" data-aos="fade-up">Meet the Architects</h2>
+                    <div class="space-y-12">
+                        <!-- Ishita -->
+                        <div class="glass-card p-8 flex flex-col md:flex-row items-center gap-8" data-aos="fade-up">
+                            <div class="flex-shrink-0 text-center">
+                                <div class="w-32 h-32 rounded-full bg-indigo-200 dark:bg-indigo-900 flex items-center justify-center mx-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                </div>
+                                <h3 class="text-2xl font-bold mt-4">Yadav Ishita Anilkumar Sumitra</h3>
+                                <p class="text-indigo-400 font-semibold">Team Lead & Full-Stack Architect</p>
+                            </div>
+                            <div>
+                                <p class="mb-4" style="color: var(--text-muted-color);">The visionary behind the project, Ishita led the development from concept to deployment, architecting both the frontend and backend systems while ensuring seamless integration of all features.</p>
+                                <h4 class="font-semibold mb-2">Key Contributions:</h4>
+                                <ul class="list-disc list-inside space-y-1 text-sm" style="color: var(--text-muted-color);">
+                                    <li><strong>Project Architecture:</strong> Designed the full-stack application structure, data flow, and API contracts.</li>
+                                    <li><strong>Backend Development:</strong> Built the entire Spring Boot REST API, including controllers, services, and JPA repositories for data persistence.</li>
+                                    <li><strong>Frontend Development:</strong> Engineered the dynamic JavaScript frontend, including the timeline planner, state management, and all interactive components.</li>
+                                    <li><strong>UI/UX & Feature Implementation:</strong> Designed the user interface with Tailwind CSS and implemented all advanced features like the travel journal, expense tracker, and PDF export.</li>
+                                    <li><strong>API Integration:</strong> Integrated the Groq AI API for intelligent suggestions and managed third-party libraries.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- Aditya & Ayush -->
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="glass-card p-8 flex flex-col items-center text-center" data-aos="fade-up" data-aos-delay="100">
+                                <div class="w-24 h-24 rounded-full bg-emerald-200 dark:bg-emerald-900 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
+                                </div>
+                                <h3 class="text-xl font-bold mt-4">Yadav Aditya Karamljeet Maina</h3>
+                                <p class="text-emerald-400 font-semibold">Backend & Database Specialist</p>
+                                <p class="mt-3 text-sm" style="color: var(--text-muted-color);">Aditya played a crucial role in ensuring the backend's stability and reliability. He focused on testing the API endpoints and validating the data persistence layer to guarantee data integrity.</p>
+                            </div>
+                            <div class="glass-card p-8 flex flex-col items-center text-center" data-aos="fade-up" data-aos-delay="200">
+                                <div class="w-24 h-24 rounded-full bg-cyan-200 dark:bg-cyan-900 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                </div>
+                                <h3 class="text-xl font-bold mt-4">Yadav Ayush Vinay Sunita</h3>
+                                <p class="text-cyan-400 font-semibold">Frontend & UI Specialist</p>
+                                <p class="mt-3 text-sm" style="color: var(--text-muted-color);">Ayush was instrumental in crafting the polished user interface. He translated design concepts into responsive, functional components and ensured a consistent visual experience across the application.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// --- Initialization ---
+AOS.init({ duration: 700, once: true, easing: 'ease-in-out' });
+window.jsPDF = window.jspdf.jsPDF;
+
+// --- Aurora Background ---
+document.body.addEventListener('mousemove', (e) => {
+    document.body.style.setProperty('--x', `${e.clientX}px`);
+    document.body.style.setProperty('--y', `${e.clientY}px`);
+});
+
+// --- Theme Toggle ---
+const themeToggleBtn = document.getElementById('theme-toggle');
+const sunIcon = document.getElementById('icon-sun');
+const moonIcon = document.getElementById('icon-moon');
+function applyTheme(theme) {
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        sunIcon.style.display = 'block'; moonIcon.style.display = 'none';
+    } else {
+        document.documentElement.classList.remove('dark');
+        sunIcon.style.display = 'none'; moonIcon.style.display = 'block';
+    }
+}
+themeToggleBtn.addEventListener('click', () => {
+    const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    localStorage.setItem('theme', newTheme); applyTheme(newTheme);
+});
+applyTheme(localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+
+// --- Application Logic ---
+const GROQ_API_KEY = "YOUR_GROQ_API_KEY"; // IMPORTANT: Replace with your Groq API key
+const API_URL = 'http://localhost:8080/api/itineraries';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+// DOM Elements
+const itineraryForm = document.getElementById('itinerary-form');
+const itineraryList = document.getElementById('itinerary-list');
+const getSuggestionsBtn = document.getElementById('get-suggestions-btn');
+const aiSuggestionsDiv = document.getElementById('ai-suggestions');
+const startDateInput = document.getElementById('start-date');
+const endDateInput = document.getElementById('end-date');
+const dayPlannerContainer = document.getElementById('day-planner-container');
+const quickJumpNav = document.getElementById('quick-jump-nav');
+const exportPdfBtn = document.getElementById('export-pdf-btn');
+
+// --- Tab Switching ---
+const tabs = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('.content-section');
+tabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.style.display = 'none');
+        e.currentTarget.classList.add('active');
+        const targetSection = document.getElementById(e.currentTarget.dataset.target);
+        if (targetSection) { targetSection.style.display = 'block'; AOS.refresh(); }
+    });
+});
+document.querySelector('.nav-link[data-target="planner"]').click();
+
+// --- Day Planner & Quick Jump ---
+function generateDayPanels() {
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(endDateInput.value);
+    dayPlannerContainer.innerHTML = ''; quickJumpNav.innerHTML = '';
+    if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) return;
+
+    let currentDate = new Date(startDate);
+    let dayCounter = 1;
+    while (currentDate <= endDate) {
+        const dateString = currentDate.toISOString().split('T')[0];
+        const panel = document.createElement('div');
+        panel.className = 'day-panel p-4 rounded-lg mb-4'; // Added mb-4 for spacing
+        panel.id = `day-${dayCounter}`;
+        panel.dataset.date = dateString;
+        panel.innerHTML = `
+            <h3 class="font-bold text-lg">Day ${dayCounter}: ${currentDate.toLocaleString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
+            <div class="activities-container space-y-2 mt-2"></div>
+            <button type="button" class="add-activity-btn mt-2 text-sm text-cyan-500 hover:text-cyan-400 font-semibold">+ Add Activity</button>
+            <div class="mt-4">
+                <h4 class="font-semibold text-sm">Journal & Photos</h4>
+                <div class="photo-gallery flex gap-2 mt-2 flex-wrap"></div>
+                <div class="journal-entry mt-2"></div>
+                <div class="flex gap-2 mt-2">
+                    <button type="button" class="add-photo-btn text-xs font-semibold">Add Photo</button>
+                    <button type="button" class="add-note-btn text-xs font-semibold">Add Note</button>
+                </div>
+            </div>`;
+        dayPlannerContainer.appendChild(panel);
+        
+        const jumpLink = document.createElement('a');
+        jumpLink.href = `#day-${dayCounter}`;
+        jumpLink.className = 'py-1 px-3 rounded-full text-sm cursor-pointer';
+        jumpLink.style.backgroundColor = 'var(--input-bg)';
+        jumpLink.innerText = `Day ${dayCounter}`;
+        jumpLink.onclick = (e) => {
+            e.preventDefault();
+            document.querySelector(jumpLink.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+        };
+        quickJumpNav.appendChild(jumpLink);
+
+        currentDate.setDate(currentDate.getDate() + 1);
+        dayCounter++;
+    }
+}
+startDateInput.addEventListener('change', generateDayPanels);
+endDateInput.addEventListener('change', generateDayPanels);
+
+// --- Event Delegation for Planner ---
+dayPlannerContainer.addEventListener('click', function(e) {
+    const target = e.target;
+    if (target.classList.contains('add-activity-btn')) {
+        const container = target.previousElementSibling;
+        const el = document.createElement('div');
+        el.className = 'activity-item flex items-center gap-2';
+        el.innerHTML = `<input type="time" class="activity-time rounded-md p-1 w-24 border-none"><input type="text" placeholder="e.g., Visit Eiffel Tower" class="activity-desc flex-grow rounded-md p-1 border-none"><button type="button" class="remove-activity-btn text-red-500 hover:text-red-400 text-2xl font-bold">&times;</button>`;
+        container.appendChild(el);
+    }
+    if (target.classList.contains('remove-activity-btn')) {
+        target.closest('.activity-item').remove();
+    }
+    if (target.classList.contains('add-photo-btn')) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    target.closest('.mt-4').querySelector('.photo-gallery').appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        input.click();
+    }
+    if (target.classList.contains('add-note-btn')) {
+        const container = target.closest('.mt-4').querySelector('.journal-entry');
+        if (!container.querySelector('textarea')) {
+            const textarea = document.createElement('textarea');
+            textarea.className = 'journal-note';
+            textarea.placeholder = 'Write your memories here...';
+            container.appendChild(textarea);
+        }
+    }
+});
+
+// --- PDF Export ---
+exportPdfBtn.addEventListener('click', () => {
+    const list = document.getElementById('itinerary-list');
+    if (list.children.length === 0 || list.innerText.includes('Your saved trips')) {
+        alert('Please save an itinerary first to export it.');
+        return;
+    }
+    html2canvas(list, { scale: 2 }).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        let heightLeft = pdfHeight;
+        let position = 0;
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
+        while (heightLeft > 0) {
+            position = heightLeft - pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+            heightLeft -= pdf.internal.pageSize.getHeight();
+        }
+        pdf.save("travel-itinerary.pdf");
+    });
+});
+
+// --- Backend & API Logic ---
+async function fetchItineraries() {
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error('Failed to fetch');
+        const itineraries = await response.json();
+        itineraryList.innerHTML = itineraries.length === 0 ? '<p>Your saved trips will appear here.</p>' : '';
+        itineraries.forEach(itinerary => {
+            const dayPlans = JSON.parse(itinerary.dayPlans || '[]');
+            const itineraryCard = document.createElement('div');
+            itineraryCard.className = 'saved-card p-4 rounded-lg border';
+            let dayPlansHtml = dayPlans.map(plan => `<div class="mt-2"><h4 class="font-semibold">${new Date(plan.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</h4><ul class="list-disc list-inside text-sm">${plan.activities.map(act => `<li>${act.time ? `<strong>${act.time}</strong>: ` : ''}${act.description}</li>`).join('')}</ul></div>`).join('');
+            itineraryCard.innerHTML = `<div class="flex justify-between items-center"><h3 class="font-bold text-xl">${itinerary.destination || 'Untitled Trip'}</h3><button class="delete-itinerary-btn text-red-500 hover:text-red-400 font-bold py-1 px-3 rounded-md hover:bg-red-500/10" data-id="${itinerary.id}">Delete</button></div><p class="text-sm">From: ${itinerary.startDate} To: ${itinerary.endDate}</p>${dayPlansHtml}`;
+            itineraryList.appendChild(itineraryCard);
+        });
+    } catch (error) {
+        console.error('Error fetching itineraries:', error);
+        itineraryList.innerHTML = '<p class="text-red-400">Could not fetch itineraries. Is the backend running?</p>';
+    }
+}
+
+itineraryList.addEventListener('click', async function(e) {
+    if (e.target.classList.contains('delete-itinerary-btn')) {
+        const id = e.target.dataset.id;
+        if (confirm('Are you sure you want to delete this itinerary?')) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchItineraries(); else alert('Failed to delete itinerary.');
+            } catch (error) { console.error('Error deleting itinerary:', error); }
+        }
+    }
+});
+
+itineraryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dayPlans = Array.from(dayPlannerContainer.querySelectorAll('.day-panel')).map(panel => ({
+        date: panel.dataset.date,
+        activities: Array.from(panel.querySelectorAll('.activity-item')).map(item => ({
+            time: item.querySelector('.activity-time').value,
+            description: item.querySelector('.activity-desc').value
+        })).filter(act => act.description)
+    }));
+    const newItinerary = {
+        destination: document.getElementById('destination').value,
+        startDate: startDateInput.value,
+        endDate: endDateInput.value,
+        dayPlans: JSON.stringify(dayPlans)
+    };
+    try {
+        await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newItinerary) });
+        fetchItineraries();
+        itineraryForm.reset();
+        dayPlannerContainer.innerHTML = '';
+    } catch (error) { console.error('Error saving itinerary:', error); alert('An error occurred while saving.'); }
+});
+
+getSuggestionsBtn.addEventListener('click', async () => {
+    const destination = document.getElementById('destination').value;
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    if (!startDate || !endDate) { alert('Please select a start and end date first.'); return; }
+    if (!GROQ_API_KEY) { alert('Please add your Groq API key in the script section of the index.html file.'); return; }
+    const diffTime = Math.abs(new Date(endDate) - new Date(startDate));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    aiSuggestionsDiv.innerHTML = '<div class="flex justify-center items-center h-full"><div class="loader"></div></div>';
+    const prompt = `You are a helpful travel planning assistant. Create a detailed, day-by-day travel itinerary for a ${diffDays}-day trip to ${destination || 'the specified destination'}. Provide specific, family-friendly places and suggest timings for each activity. Structure the output clearly with headings for each day. Do not use any markdown like asterisks for bolding. Just use plain text.`;
+    try {
+        const response = await fetch(GROQ_API_URL, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "llama-3.1-8b-instant" }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error?.message);
+        aiSuggestionsDiv.innerText = data.choices[0].message.content;
+    } catch (error) {
+        console.error('Error fetching AI suggestions:', error);
+        aiSuggestionsDiv.innerHTML = `<p class="text-red-400 text-center">Failed to get AI suggestions. Reason: ${error.message}.</p>`;
+    }
+});
+
+// Dummy function for currency conversion for demonstration
+document.getElementById('from-amount').addEventListener('input', () => {
+    document.getElementById('conversion-result').innerText = 'Calculating...';
+    setTimeout(() => {
+         document.getElementById('conversion-result').innerText = `~ ${(Math.random() * 8300).toFixed(2)} INR`;
+    }, 500);
+});
+
+// Initial fetch
+fetchItineraries(); 
+</script>
+</body>
+</html>
